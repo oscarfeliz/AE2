@@ -37,8 +37,11 @@ Nuestro programa ha de ser capaz de cumplir con los siguientes pasos:
     una descripción de esta, el tipo de codificación de esta, o palabras
     clave que indican qué tipo de información contiene la página. Una
     vez descargada la página, y convertida a un formato analizable (como
-    XML), buscaremos los elementos de tipo “title”. P.e. “<title>Titulo
-    de Página</title>”.
+    XML), buscaremos los elementos de tipo “title”. P.e. “
+
+    <title>Titulo de Página</title>
+
+    ”.
 
 ```{r}
 
