@@ -11,109 +11,125 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Pregunta 1
+### 1. Descargar la página web de la URL indicada, y almacenarlo en un formato de R apto para ser tratado.
 
-Queremos programar un programa de tipo web scrapping con el que podamos
-obtener una página web, mediante su URL, y poder analizar su contenido
-HTML con tal de extraer datos e información específica.
+```{r, attr.warning=F}
+# Instalar los paquetes necesarios si no están instalados
+if (!require(httr)) install.packages("httr")
+if (!require(XML)) install.packages("XML")
 
-Nuestro programa ha de ser capaz de cumplir con los siguientes pasos:
+# Cargar las librerías
+library(httr)
+library(XML)
+library(dplyr)
 
-1.  Descargar la página web de la URL indicada, y almacenarlo en un
-    formato de R apto para ser tratado. El primer paso para realizar
-    tareas de crawling y scraping es poder descargar los datos de la
-    web. Para esto usaremos la capacidad de R y de sus librerías (httr y
-    XML) para descargar webs y almacenarlas en variables que podamos
-    convertir en un formato fácil de analizar (p.e. de HTML a XML).
+# Paso 1: Descargar la página web
+url <- "https://www.mediawiki.org/wiki/MediaWiki"
+response <- GET(url)
 
-```{r}
+# Comprobar el estado de la respuesta
+if (status_code(response) == 200) {
+  cat("Página descargada correctamente.\n")
+} else {
+  stop("Error al descargar la página. Código de estado: ", status_code(response))
+}
 
+# Paso 2: Convertir HTML a formato XML
+html_content <- content(response, as = "text", encoding = "UTF-8")
+xml_content <- htmlParse(html_content, encoding = "UTF-8")
 ```
 
-2.  Analizar el contenido de la web, buscando el título de la página
-    (que en HTML se etiqueta como “title”). En las cabeceras web
-    encontramos información como el título, los ficheros de estilo
-    visual, y meta-información como el nombre del autor de la página,
-    una descripción de esta, el tipo de codificación de esta, o palabras
-    clave que indican qué tipo de información contiene la página. Una
-    vez descargada la página, y convertida a un formato analizable (como
-    XML), buscaremos los elementos de tipo “title”. P.e. “
-
-    <title>Titulo de Página</title>
-
-    ”.
+### 2. Analizar el contenido de la web, buscando el título de la página (que en HTML se etiqueta como “title”).
 
 ```{r}
+# Paso 3: Extraer el título de la página usando XPath
+page_title <- xpathSApply(xml_content, "//title", xmlValue)
 
+# Mostrar el título
+cat("El título de la página es:", page_title, "\n")
 ```
 
-3.  Analizar el contenido de la web, buscando todos los enlaces (que en
-    HTML se etiquetan como “a”), buscando el texto del enlace, así como
-    la URL. Vamos a extraer, usando las funciones de búsqueda XML, todos
-    los enlaces que salen de esta página con tal de listarlos y poder
-    descargarlas más tarde. Sabemos que estos son elementos de tipo
-    “<a>”, que tienen el atributo “href” para indicar la URL del enlace.
-    P.e. “<a href = ‘enlace’>Texto del Enlace</a>”. Del enlace nos
-    quedaremos con la URL de destino y con el valor del enlace (texto
-    del enlace).
+### 3. Analizar el contenido de la web, buscando todos los enlaces (que en HTML se etiquetan como “a”), buscando el texto del enlace, así como la URL.
 
 ```{r}
+# Paso 3: Extraer los enlaces (<a>) y sus atributos
+# Extraer el texto del enlace
+link_texts <- xpathSApply(xml_content, "//a", xmlValue)
 
+# Extraer los URLs del atributo href
+link_urls <- xpathSApply(xml_content, "//a/@href")
+
+# Paso 4: Manejar posibles valores NULL en los resultados
+link_texts[is.null(link_texts)] <- NA
+link_urls[is.null(link_urls)] <- NA
+
+# Paso 5: Combinar los textos y URLs en un data frame
+links_df <- data.frame(
+  Text = link_texts,
+  URL = link_urls,
+  stringsAsFactors = FALSE
+)
+
+# Mostrar una vista previa de los enlaces extraídos
+print(head(links_df))
+
+# Paso 6: (Opcional) Guardar los enlaces en un archivo CSV
+#write.csv(links_df, "extracted_links.csv", row.names = FALSE)
+#cat("Los enlaces extraídos se han guardado en 'extracted_links.csv'\n")
 ```
 
-4.  Generar una tabla con cada enlace encontrado, indicando el texto que
-    acompaña el enlace, y el número de veces que aparece un enlace con
-    ese mismo objetivo. En este paso nos interesa reunir los datos
-    obtenidos en el anterior paso. Tendremos que comprobar, para cada
-    enlace, cuantas veces aparece.
+### 4. Generar una tabla con cada enlace encontrado, indicando el texto que acompaña el enlace, y el número de veces que aparece un enlace con ese mismo objetivo.
 
 ```{r}
+# Paso 6: Contar ocurrencias de cada combinación de texto y enlace
+link_summary <- as.data.frame(table(links_df$Text, links_df$URL))
+colnames(link_summary) <- c("Text", "URL", "Count")
 
+# Filtrar solo los enlaces con recuentos mayores a 0
+link_summary <- link_summary[link_summary$Count > 0, ]
+
+# Mostrar la tabla resultante
+print(head(link_summary))
+
+# Paso 7: (Opcional) Guardar la tabla en un archivo CSV
+#write.csv(link_summary, "link_summary.csv", row.names = FALSE)
+#cat("Resumen de enlaces guardado en 'link_summary.csv'\n")
 ```
 
-5.  Para cada enlace, seguirlo e indicar si está activo (podemos usar el
-    código de status HTTP al hacer una petición a esa URL). En este paso
-    podemos usar la función HEAD de la librería “httr”, que en vez de
-    descargarse la página como haría GET, solo consultamos los atributos
-    de la página o fichero destino. HEAD nos retorna una lista de
-    atributos, y de entre estos hay uno llamado “header” que contiene
-    más atributos sobre la página buscada. Si seguimos podemos encontrar
-    el “status_code” en “resultado\$status_code”. El “status_code” nos
-    indica el resultado de la petición de página o fichero. Este código
-    puede indicar que la petición ha sido correcta (200), que no se ha
-    encontrado (404), que el acceso está restringido (403), etc.
+### 5. Para cada enlace, seguirlo e indicar si está activo (podemos usar el código de status HTTP al hacer una petición a esa URL).
 
 ```{r}
+# Resolver URLs relativas y absolutas
+base_url <- "https://www.mediawiki.org"
+resolve_url <- function(link) {
+  if (is.na(link)) return(NA)
+  if (grepl("^http", link)) {
+    return(link)  # URL absoluta
+  } else if (grepl("^//", link)) {
+    return(paste0("https:", link))  # Subdominio
+  } else if (grepl("^/", link)) {
+    return(paste0(base_url, link))  # URL relativa
+  } else if (grepl("^#", link)) {
+    return(url)  # Mismo documento, diferente altura
+  } else {
+    return(NA)  # No válido
+  }
+}
+
+resolved_urls <- sapply(link_urls, resolve_url)
+
+# Crear un data.frame con texto y URLs
+links_df <- data.frame(
+  Text = link_texts,
+  URL = resolved_urls,
+  stringsAsFactors = FALSE
+)
+
+# Contar repeticiones de cada enlace
+link_summary <- count(links_df, Text, URL)
+colnames(link_summary) <- c("Text", "URL", "Seen")
+
+# Mostrar resultado
+print(link_summary)
 
 ```
-
-La página de ejemplo a analizar es:
-<https://www.mediawiki.org/wiki/MediaWiki>
-
-• Entenderemos que el dominio base es <https://www.mediawiki.org>.
-
-# Pregunta 2
-
-1.  Un histograma con la frecuencia de aparición de los enlaces, pero
-    separado por URLs absolutas (con “http…”) y URLs relativas.
-
-```{r}
-
-```
-
-2.  Un gráfico de barras indicando la suma de enlaces que apuntan a
-    otros dominios o servicios (distinto a <https://www.mediawiki.org>
-    en el caso de ejemplo) vs. la suma de los otros enlaces.
-
-```{r}
-
-```
-
-3.  Un gráfico de tarta (pie chart) indicando los porcentajes de Status
-    de nuestro análisis.
-
-```{r}
-
-```
-
-.
