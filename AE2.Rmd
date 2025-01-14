@@ -11,6 +11,8 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Pregunta 1
+
 ### 1. Descargar la página web de la URL indicada, y almacenarlo en un formato de R apto para ser tratado.
 
 ```{r, attr.warning=F}
@@ -131,5 +133,25 @@ colnames(link_summary) <- c("Text", "URL", "Seen")
 
 # Mostrar resultado
 print(link_summary)
+```
+
+# Pregunta 2
+
+### 1. Un histograma con la frecuencia de aparición de los enlaces, pero separado porURLs absolutas (con “http…”) y URLs relativas.
+
+```{r}
+
+```
+
+### 
+2. Un gráfico de barras indicando la suma de enlaces que apuntan a otros dominios o servicios (distinto a <https://www.mediawiki.org> en el caso de ejemplo) vs. la suma de los otros enlaces.
+
+```{r}
+
+```
+
+### 3.Un gráfico de tarta (pie chart) indicando los porcentajes de Status de nuestro análisis.
+
+```{r}
 
 ```
