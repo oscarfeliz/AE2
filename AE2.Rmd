@@ -135,7 +135,24 @@ print(link_summary)
 #librerias
 library(ggplot2)
 
-barplot(height = table(link_summary$URL), col = "purple", main = "Frecuencua aparición enlaces")
+# Clasificar las URLs como absolutas o relativas
+link_summary$Type <- ifelse(grepl("^http", link_summary$URL), "Absoluta", "Relativa")
+
+# Contar la frecuencia de cada tipo
+#url_counts <- table(link_summary$Type)
+
+# Crear un barplot
+#barplot(
+ # url_counts,
+#  main = "Frecuencia de URLs Absolutas y Relativas",
+ # xlab = "Tipo de URL",
+#  ylab = "Frecuencia",
+#  col = c("blue", "green"),
+  #names.arg = c("Absolutas", "Relativas"),
+#  border = "white"
+#)
+
+barplot(height = table(link_summary$Type), col = "purple", main = "Frecuencua aparición enlaces")
 ```
 
 ### 
