@@ -97,19 +97,14 @@ print(head(link_summary))
 base_url <- "https://www.mediawiki.org"
 resolve_url <- function(link) {
   if (is.na(link)) return(NA)
-  if (grepl("^http", link)) {
-    return(link)  # URL absoluta
-  } else if (grepl("^//", link)) {
-    return(paste0("https:", link))  # Subdominio
-  } else if (grepl("^/", link)) {
-    return(paste0(base_url, link))  # URL relativa
-  } else if (grepl("^#", link)) {
-    return(url)  # Mismo documento, diferente altura
-  } else {
-    return(NA)  # No válido
-  }
+  if (grepl("^http", link)) return(link)  # URL absoluta
+  if (grepl("^//", link)) return(paste0("https:", link))  # Subdominio
+  if (grepl("^/", link)) return(paste0(base_url, link))  # URL relativa
+  if (grepl("^#", link)) return(base_url)  # Mismo documento
+  return(NA)  # No válido
 }
 
+# Resolver URLs de forma vectorizada
 resolved_urls <- sapply(link_urls, resolve_url)
 
 # Crear un data.frame con texto y URLs
@@ -120,26 +115,24 @@ links_df <- data.frame(
 )
 
 # Contar repeticiones de cada enlace
-link_summary <- count(links_df, Text, URL)
-colnames(link_summary) <- c("Text", "URL", "Seen")
+link_summary <- links_df %>%
+  count(Text, URL, name = "Seen")
 
 # Función para obtener el estado HTTP de una URL
 get_status <- function(link) {
   if (is.na(link)) return(NA)
-  result <- tryCatch({
-    head_response <- HEAD(link)
-    status_code(head_response)
-  }, error = function(e) {
-    return(NA)  # Error al consultar la URL
-  })
-  return(result)
+  tryCatch({
+    status_code(HEAD(link))
+  }, error = function(e) NA)
 }
 
-# Obtener el estado HTTP de cada URL
-link_summary$Status <- sapply(link_summary$URL, get_status)
+# Obtener el estado HTTP de cada URL (vectorizado)
+link_summary <- link_summary %>%
+  mutate(Status = sapply(URL, get_status))
 
 # Mostrar el resultado
 print(link_summary)
+
 ```
 
 # Pregunta 2
