@@ -123,7 +123,22 @@ links_df <- data.frame(
 link_summary <- count(links_df, Text, URL)
 colnames(link_summary) <- c("Text", "URL", "Seen")
 
-# Mostrar resultado
+# Función para obtener el estado HTTP de una URL
+get_status <- function(link) {
+  if (is.na(link)) return(NA)
+  result <- tryCatch({
+    head_response <- HEAD(link)
+    status_code(head_response)
+  }, error = function(e) {
+    return(NA)  # Error al consultar la URL
+  })
+  return(result)
+}
+
+# Obtener el estado HTTP de cada URL
+link_summary$Status <- sapply(link_summary$URL, get_status)
+
+# Mostrar el resultado
 print(link_summary)
 ```
 
@@ -138,25 +153,14 @@ library(ggplot2)
 # Clasificar las URLs como absolutas o relativas
 link_summary$Type <- ifelse(grepl("^http", link_summary$URL), "Absoluta", "Relativa")
 
-# Contar la frecuencia de cada tipo
-#url_counts <- table(link_summary$Type)
-
-# Crear un barplot
-#barplot(
- # url_counts,
-#  main = "Frecuencia de URLs Absolutas y Relativas",
- # xlab = "Tipo de URL",
-#  ylab = "Frecuencia",
-#  col = c("blue", "green"),
-  #names.arg = c("Absolutas", "Relativas"),
-#  border = "white"
-#)
-
 barplot(height = table(link_summary$Type), col = "purple", main = "Frecuencua aparición enlaces")
 ```
 
 ### 
-2. Un gráfico de barras indicando la suma de enlaces que apuntan a otros dominios o servicios (distinto a <https://www.mediawiki.org> en el caso de ejemplo) vs. la suma de los otros enlaces.
+
+2.  Un gráfico de barras indicando la suma de enlaces que apuntan a
+    otros dominios o servicios (distinto a <https://www.mediawiki.org>
+    en el caso de ejemplo) vs. la suma de los otros enlaces.
 
 ```{r}
 
