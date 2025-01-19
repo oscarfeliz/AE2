@@ -143,10 +143,21 @@ print(link_summary)
 #librerias
 library(ggplot2)
 
-# Clasificar las URLs como absolutas o relativas
-link_summary$Type <- ifelse(grepl("^http", link_summary$URL), "Absoluta", "Relativa")
+#Extraer el tipo de página (absoluta, relativa)
+links_tipo_url <- xpathSApply(xml_content,"//a",xmlGetAttr,"href")
 
-barplot(height = table(link_summary$Type), col = "purple", main = "Frecuencua aparición enlaces")
+# Crear un data.frame con texto, URLs y tipo
+links_df <- data.frame(
+  Text = link_texts,
+  URL = resolved_urls,
+  Tipo = links_tipo_url,
+  stringsAsFactors = FALSE
+)
+
+# Clasificar las URLs como absolutas o relativas
+links_df$Tipo <- ifelse(grepl("^http", links_df$Tipo), "Absoluta", "Relativa")
+
+barplot(height = table(links_df$Tipo), col = "purple", main = "Frecuencua aparición enlaces")
 ```
 
 ### 
