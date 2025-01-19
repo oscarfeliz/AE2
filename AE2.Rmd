@@ -142,8 +142,12 @@ print(link_summary)
 ```{r}
 #librerias
 library(ggplot2)
+library(gridExtra)
+```
 
-#Extraer el tipo de página (absoluta, relativa)
+```{r}
+
+#Extraer el tipo de página (absoluta, relativa)}
 links_tipo_url <- xpathSApply(xml_content,"//a",xmlGetAttr,"href")
 
 # Crear un data.frame con texto, URLs y tipo
@@ -157,7 +161,7 @@ links_df <- data.frame(
 # Clasificar las URLs como absolutas o relativas
 links_df$Tipo <- ifelse(grepl("^http", links_df$Tipo), "Absoluta", "Relativa")
 
-barplot(height = table(links_df$Tipo), col = "deepskyblue3", main = "Frecuencua aparición enlaces")
+barplot (height = table(links_df$Tipo), col = "deepskyblue3", main = "Frecuencua aparición enlaces")
 ```
 
 ### 
@@ -209,8 +213,32 @@ status_percentages <- round(100 * status_counts / sum(status_counts, na.rm = TRU
 status_labels <- paste(names(status_counts), "(", status_percentages, "%)", sep = "")
 
 # Generar el gráfico de tarta
-pie(status_counts,labels = status_labels,
+pie1 <- pie(status_counts,labels = status_labels,
     col = rainbow(length(status_counts)),main = "Porcentajes de Status de los Enlaces"
 )
+
+```
+
+```{r}
+# Combinar los gráficos en una sola figura
+#grid.arrange(grobs = list(barplot1, barplot2, pie), ncol = 2)
+
+# Dividir el dispositivo gráfico en 2 columnas y 2 filas
+layout(matrix(c(1, 2, 3, 3), ncol = 2, byrow = TRUE))
+
+# Primer barplot
+barplot(height = table(links_df$Tipo), 
+        col = "deepskyblue3", 
+        main = "Frecuencia de Aparición de Enlaces")
+
+# Segundo barplot
+barplot(height = table(url_sums$Category), 
+        col = "cadetblue2", 
+        main = "Frecuencia de Enlaces por Visto")
+
+# Pie chart
+pie(table(link_summary$Status), 
+    col = c("red", "blue2"), 
+    main = "Distribución de Estados HTTP")
 
 ```
