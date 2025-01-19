@@ -199,5 +199,18 @@ barplot(
 ### 3.Un gráfico de tarta (pie chart) indicando los porcentajes de Status de nuestro análisis.
 
 ```{r}
+# Contar las frecuencias de cada código de estado
+status_counts <- table(link_summary$Status)
+
+# Calcular los porcentajes
+status_percentages <- round(100 * status_counts / sum(status_counts, na.rm = TRUE), 1)
+
+# Crear etiquetas con el código de estado y el porcentaje
+status_labels <- paste(names(status_counts), "(", status_percentages, "%)", sep = "")
+
+# Generar el gráfico de tarta
+pie(status_counts,labels = status_labels,
+    col = rainbow(length(status_counts)),main = "Porcentajes de Status de los Enlaces"
+)
 
 ```
