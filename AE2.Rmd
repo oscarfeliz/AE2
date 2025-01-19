@@ -157,7 +157,7 @@ links_df <- data.frame(
 # Clasificar las URLs como absolutas o relativas
 links_df$Tipo <- ifelse(grepl("^http", links_df$Tipo), "Absoluta", "Relativa")
 
-barplot(height = table(links_df$Tipo), col = "purple", main = "Frecuencua aparición enlaces")
+barplot(height = table(links_df$Tipo), col = "deepskyblue3", main = "Frecuencua aparición enlaces")
 ```
 
 ### 
@@ -167,6 +167,32 @@ barplot(height = table(links_df$Tipo), col = "purple", main = "Frecuencua aparic
     en el caso de ejemplo) vs. la suma de los otros enlaces.
 
 ```{r}
+# Base URL
+base_url <- "https://www.mediawiki.org"
+
+# Función para clasificar las URLs como internas o externas
+classify_url <- function(url) {
+  if (is.na(url)) {
+    return("Desconocido")
+  } else if (grepl(base_url, url)) {
+    return("Interna")
+  } else {
+    return("Externa")
+  }
+}
+
+# Clasificar las URLs en el data frame
+link_summary$Category <- sapply(link_summary$URL, classify_url)
+
+# Sumar enlaces internos y externos
+url_sums <- aggregate(Seen ~ Category, data = link_summary, sum, na.rm = TRUE)
+
+# Crear gráfico de barras
+barplot(
+  height = url_sums$Seen,names.arg = url_sums$Category,main = "Enlaces Internos vs Externos",
+  xlab = "Tipo de Enlace",ylab = "Suma de Enlaces",col = c("cadetblue2", "deepskyblue1"),
+  border = "black"
+)
 
 ```
 
