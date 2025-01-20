@@ -173,9 +173,9 @@ classify_url <- function(url) {
   if (is.na(url)) {
     return("Desconocido")
   } else if (grepl(base_url, url)) {
-    return("Interna")
+    return("Internos")
   } else {
-    return("Externa")
+    return("Externos")
   }
 }
 
@@ -188,8 +188,7 @@ url_sums <- aggregate(Seen ~ Category, data = link_summary, sum, na.rm = TRUE)
 # Generamos el gráfico de barras
 barplot(
   height = url_sums$Seen,names.arg = url_sums$Category,main = "Enlaces internos y externos",
-  xlab = "Tipo de enlace",ylab = "Suma",col = c("cadetblue2", "deepskyblue1"),
-  border = "black"
+  xlab = "Tipo de enlace",ylab = "Suma",col = c("salmon", "turquoise"), border=FALSE
 )
 
 ```
@@ -206,9 +205,13 @@ status_percentages <- round(100 * status_counts / sum(status_counts, na.rm = TRU
 # Generamos las etiquetas con el código de estado y su porcentaje
 status_labels <- paste(names(status_counts), "(", status_percentages, "%)", sep = "")
 
+#Después de buscar los códigos de colores los asignamos
+custom_colors <- c("200" = "#40E0D0", "404" = "#FFA07A")
+
 # Generar el gráfico de tarta
-pie1 <- pie(status_counts,labels = status_labels,
-    col = rainbow(length(status_counts)),main = "Porcentajes de estados de los enlaces"
+pie1 <- pie(
+  status_counts,labels = status_labels,col = custom_colors[names(status_counts)],
+  border=FALSE, main = "Porcentajes de estados de los enlaces"
 )
 
 ```
@@ -223,14 +226,16 @@ par(mfrow = c(1, 3))
 {
   # Gráfico 1
   barplot(height = frequencies$Count, names.arg = frequencies$Tipo, 
-          main = "Frecuencia de enlaces", xlab = "Tipo", ylab = "Frecuencia")
+          main = "Frecuencia de enlaces", xlab = "Tipo", ylab = "Frecuencia",
+          col = c("salmon", "turquoise"), border=FALSE)
   
   # Gráfico 2
   barplot(height = url_sums$Seen, names.arg = url_sums$Category, 
-          main = "Enlaces internos y externos", xlab = "Tipo de enlace", ylab = "Suma")
+          main = "Enlaces internos y externos", xlab = "Tipo de enlace", ylab = "Suma",
+          col = c("salmon", "turquoise"), border=FALSE)
   
   # Gráfico 3
-  pie(status_counts, labels = status_labels, col = rainbow(length(status_counts)),
-      main = "Porcentajes de estados")
+  pie(status_counts, labels = status_labels, col = custom_colors[names(status_counts)],
+  border=FALSE,main = "Porcentajes de estados")
 }
 ```
