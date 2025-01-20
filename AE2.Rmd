@@ -240,5 +240,4 @@ barplot(height = table(url_sums$Category),
 pie(table(link_summary$Status), 
     col = c("red", "blue2"), 
     main = "Distribución de Estados HTTP")
-
 ```
