@@ -12,11 +12,11 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, attr.warning=F}
-# Instalar los paquetes necesarios si no están instalados
+# Instalamos los paquetes necesarios
 if (!require(httr)) install.packages("httr")
 if (!require(XML)) install.packages("XML")
 
-# Cargar las librerías
+# Cargamos librerías
 library(httr)
 library(XML)
 library(dplyr)
@@ -45,6 +45,9 @@ html_content <- content(response, as = "text", encoding = "UTF-8")
 xml_content <- htmlParse(html_content, encoding = "UTF-8")
 ```
 
+Inicialmente descargamos la página web y comprobamos que lo hace bien.
+Guardamos el contenido en HTML y en XML para posteriores manipulaciones.
+
 ### 2. Analizar el contenido de la web, buscando el título de la página (que en HTML se etiqueta como “title”).
 
 ```{r}
@@ -55,10 +58,13 @@ page_title <- xpathSApply(xml_content, "//title", xmlValue)
 cat("El título de la página es", page_title, "\n")
 ```
 
+Aprovechando las funcionalidades de xpathSApply extraemos el valor del
+título de la página y lo mostramos.
+
 ### 3. Analizar el contenido de la web, buscando todos los enlaces (que en HTML se etiquetan como “a”), buscando el texto del enlace, así como la URL.
 
 ```{r}
-# Extraemos los enlaces (<a>) y sus atributos y el texto
+# Extraemos los enlaces (<a>), sus atributos y el texto
 link_texts <- xpathSApply(xml_content, "//a", xmlValue)
 
 # Extraemos las URLs del atributo href
@@ -79,6 +85,9 @@ links_df <- data.frame(
 print(head(links_df))
 ```
 
+Primeramente extraemos el contenido de los enlaces y los enlaces para
+crear un dataframe en el que se muestre el enlace y su contenido.
+
 ### 4. Generar una tabla con cada enlace encontrado, indicando el texto que acompaña el enlace, y el número de veces que aparece un enlace con ese mismo objetivo.
 
 ```{r}
@@ -93,9 +102,17 @@ link_summary <- link_summary[link_summary$Count > 0, ]
 print(head(link_summary))
 ```
 
+A partir del data frame anterior creamos una tabla con tres columna
+(texto, enlace y contaje) que nos muestre el número de repeticiones de
+cada uno de los enlaces (siempre que haya un mínimo de un enlace) para
+mostrarlos posteriormente.
+
 ### 5. Para cada enlace, seguirlo e indicar si está activo (podemos usar el código de status HTTP al hacer una petición a esa URL).
 
 ```{r}
+#Descargarmos de nuevo la web
+base_url <- "https://www.mediawiki.org"
+
 # Diferenciamos entre URLs relativas y absolutas
 resolve_url <- function(link) {
   if (is.na(link)) return(NA)
@@ -134,8 +151,13 @@ link_summary <- link_summary %>%
 
 # Mostrar el resultado
 print(link_summary)
-
 ```
+
+Se descarga nuevamente la web para hacer una discriminación entre los
+enlaces relativos y absolutos, y hacermos de nuevo el data frame y
+contamos cuántas repeticiones tiene cada enlace, y su estado. Se lo
+pasamos a la tabla link_summary y nos nostrará los valores de los
+enlaces, su texto, repeticiones y estado.
 
 # Pregunta 2
 
