@@ -216,21 +216,21 @@ pie1 <- pie(status_counts,labels = status_labels,
 ### 4. Juntamos los gráficos en una única hoja.
 
 ```{r}
-# Dividimos el dispositivo gráfico en 2 columnas y 2 filas
-layout(matrix(c(1, 2, 3, 3), ncol = 2, byrow = TRUE))
+# Dividimos el espacio gráfico en 3 columnas
+par(mfrow = c(1, 3))
 
-# Primer barplot
-barplot(height = table(links_df$Tipo), 
-        col = "deepskyblue3", 
-        main = "Frecuencia de Aparición de Enlaces")
-
-# Segundo barplot
-barplot(height = table(url_sums$Category), 
-        col = "cadetblue2", 
-        main = "Frecuencia de Enlaces por Visto")
-
-# Pie chart
-pie(table(link_summary$Status), 
-    col = c("red", "blue2"), 
-    main = "Distribución de Estados HTTP")
+# Llamamos a los tres gráficos
+{
+  # Gráfico 1
+  barplot(height = frequencies$Count, names.arg = frequencies$Tipo, 
+          main = "Frecuencia de enlaces", xlab = "Tipo", ylab = "Frecuencia")
+  
+  # Gráfico 2
+  barplot(height = url_sums$Seen, names.arg = url_sums$Category, 
+          main = "Enlaces internos y externos", xlab = "Tipo de enlace", ylab = "Suma")
+  
+  # Gráfico 3
+  pie(status_counts, labels = status_labels, col = rainbow(length(status_counts)),
+      main = "Porcentajes de estados")
+}
 ```
