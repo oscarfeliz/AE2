@@ -11,10 +11,6 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Pregunta 1
-
-### 1. Descargar la página web de la URL indicada, y almacenarlo en un formato de R apto para ser tratado.
-
 ```{r, attr.warning=F}
 # Instalar los paquetes necesarios si no están instalados
 if (!require(httr)) install.packages("httr")
@@ -26,19 +22,25 @@ library(XML)
 library(dplyr)
 library(ggplot2)
 library(gridExtra)
+```
 
-# Descargar la página web
+# Pregunta 1
+
+### 1. Descargar la página web de la URL indicada, y almacenarlo en un formato de R apto para ser tratado.
+
+```{r}
+#Descargamos la página web
 url <- "https://www.mediawiki.org/wiki/MediaWiki"
 response <- GET(url)
 
-# Comprobar el estado de la respuesta
+# Revisamos el estado de la respuesta
 if (status_code(response) == 200) {
   cat("Página descargada correctamente.\n")
 } else {
   stop("Error al descargar la página. Código de estado: ", status_code(response))
 }
 
-# Convertir HTML a formato XML
+# Lo convertimos de HTML a XML
 html_content <- content(response, as = "text", encoding = "UTF-8")
 xml_content <- htmlParse(html_content, encoding = "UTF-8")
 ```
@@ -46,28 +48,27 @@ xml_content <- htmlParse(html_content, encoding = "UTF-8")
 ### 2. Analizar el contenido de la web, buscando el título de la página (que en HTML se etiqueta como “title”).
 
 ```{r}
-# Extraer el título de la página usando XPath
+# Extraemos el título de la página
 page_title <- xpathSApply(xml_content, "//title", xmlValue)
 
-# Mostrar el título
-cat("El título de la página es:", page_title, "\n")
+# Mostramos el título
+cat("El título de la página es", page_title, "\n")
 ```
 
 ### 3. Analizar el contenido de la web, buscando todos los enlaces (que en HTML se etiquetan como “a”), buscando el texto del enlace, así como la URL.
 
 ```{r}
-# Extraer los enlaces (<a>) y sus atributos
-# Extraer el texto del enlace
+# Extraemos los enlaces (<a>) y sus atributos y el texto
 link_texts <- xpathSApply(xml_content, "//a", xmlValue)
 
-# Extraer los URLs del atributo href
+# Extraemos las URLs del atributo href
 link_urls <- xpathSApply(xml_content, "//a/@href")
 
-# Manejar posibles valores NULL en los resultados
+# Corregimos posibles valores NULL en los resultados
 link_texts[is.null(link_texts)] <- NA
 link_urls[is.null(link_urls)] <- NA
 
-# Combinar los textos y URLs en un data frame
+# Combinamos los textos y URLs en un data frame
 links_df <- data.frame(
   Text = link_texts,
   URL = link_urls,
@@ -81,22 +82,21 @@ print(head(links_df))
 ### 4. Generar una tabla con cada enlace encontrado, indicando el texto que acompaña el enlace, y el número de veces que aparece un enlace con ese mismo objetivo.
 
 ```{r}
-# Contar ocurrencias de cada combinación de texto y enlace
+# Contamos las ocurrencias de cada combinación de texto y enlace
 link_summary <- as.data.frame(table(links_df$Text, links_df$URL))
 colnames(link_summary) <- c("Text", "URL", "Count")
 
-# Filtrar solo los enlaces con recuentos mayores a 0
+# Filtramos sólo los enlaces con recuentos mayores a 0
 link_summary <- link_summary[link_summary$Count > 0, ]
 
-# Mostrar la tabla resultante
+# Mostramos la tabla resultante
 print(head(link_summary))
 ```
 
 ### 5. Para cada enlace, seguirlo e indicar si está activo (podemos usar el código de status HTTP al hacer una petición a esa URL).
 
 ```{r}
-# Resolver URLs relativas y absolutas
-base_url <- "https://www.mediawiki.org"
+# Diferenciamos entre URLs relativas y absolutas
 resolve_url <- function(link) {
   if (is.na(link)) return(NA)
   if (grepl("^http", link)) return(link)  # URL absoluta
@@ -106,17 +106,17 @@ resolve_url <- function(link) {
   return(NA)  # No válido
 }
 
-# Resolver URLs de forma vectorizada
+# Pasamos las URLs a forma vectorizada
 resolved_urls <- sapply(link_urls, resolve_url)
 
-# Crear un data.frame con texto y URLs
+# Creamos el data.frame con texto y URLs
 links_df <- data.frame(
   Text = link_texts,
   URL = resolved_urls,
   stringsAsFactors = FALSE
 )
 
-# Contar repeticiones de cada enlace
+# Contamos las repeticiones de cada enlace
 link_summary <- links_df %>%
   count(Text, URL, name = "Seen")
 
@@ -128,7 +128,7 @@ get_status <- function(link) {
   }, error = function(e) NA)
 }
 
-# Obtener el estado HTTP de cada URL (vectorizado)
+# Obtenemos el estado HTTP de cada URL (vectorizado)
 link_summary <- link_summary %>%
   mutate(Status = sapply(URL, get_status))
 
@@ -151,15 +151,15 @@ relative_links <- grep("^http", links, invert = TRUE, value = TRUE)
 
 # Contamos frecuencias
 frequencies <- data.frame(
-  Tipo = c("Absolute", "Relative"),
+  Tipo = c("Absoluta", "Relativa"),
   Count = c(length(absolute_links), length(relative_links))
 )
 
 # Generaramos el histograma
 ggplot(frequencies, aes(x = Tipo, y = Count, fill = Tipo)) +
   geom_bar(stat = "identity") +
-  ggtitle("Frecuencia de links absolutos y relativos") +
-  xlab("Tipo de link") +
+  ggtitle("Frecuencia de enlaces absolutos y relativos") +
+  xlab("Tipo de enlace") +
   ylab("Frecuencia") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
@@ -168,10 +168,7 @@ ggplot(frequencies, aes(x = Tipo, y = Count, fill = Tipo)) +
 ### 2. Un gráfico de barras indicando la suma de enlaces que apuntan a otros dominios o servicios (distinto a <https://www.mediawiki.org> en el caso de ejemplo) vs. la suma de los otros enlaces.
 
 ```{r}
-# Base URL
-base_url <- "https://www.mediawiki.org"
-
-# Función para clasificar las URLs como internas o externas
+# Clasificamos las URLs como internas o externas
 classify_url <- function(url) {
   if (is.na(url)) {
     return("Desconocido")
@@ -182,16 +179,16 @@ classify_url <- function(url) {
   }
 }
 
-# Clasificar las URLs en el data frame
+# Las incluimos en el data frame
 link_summary$Category <- sapply(link_summary$URL, classify_url)
 
-# Sumar enlaces internos y externos
+# Sumamos enlaces internos y externos
 url_sums <- aggregate(Seen ~ Category, data = link_summary, sum, na.rm = TRUE)
 
-# Crear gráfico de barras
+# Generamos el gráfico de barras
 barplot(
-  height = url_sums$Seen,names.arg = url_sums$Category,main = "Enlaces Internos vs Externos",
-  xlab = "Tipo de Enlace",ylab = "Suma de Enlaces",col = c("cadetblue2", "deepskyblue1"),
+  height = url_sums$Seen,names.arg = url_sums$Category,main = "Enlaces internos y externos",
+  xlab = "Tipo de enlace",ylab = "Suma",col = c("cadetblue2", "deepskyblue1"),
   border = "black"
 )
 
@@ -200,27 +197,26 @@ barplot(
 ### 3.Un gráfico de tarta (pie chart) indicando los porcentajes de Status de nuestro análisis.
 
 ```{r}
-# Contar las frecuencias de cada código de estado
+# Contamos las frecuencias de los estados
 status_counts <- table(link_summary$Status)
 
-# Calcular los porcentajes
+# Calculamos porcentajes
 status_percentages <- round(100 * status_counts / sum(status_counts, na.rm = TRUE), 1)
 
-# Crear etiquetas con el código de estado y el porcentaje
+# Generamos las etiquetas con el código de estado y su porcentaje
 status_labels <- paste(names(status_counts), "(", status_percentages, "%)", sep = "")
 
 # Generar el gráfico de tarta
 pie1 <- pie(status_counts,labels = status_labels,
-    col = rainbow(length(status_counts)),main = "Porcentajes de Status de los Enlaces"
+    col = rainbow(length(status_counts)),main = "Porcentajes de estados de los enlaces"
 )
 
 ```
 
-```{r}
-# Combinar los gráficos en una sola figura
-#grid.arrange(grobs = list(barplot1, barplot2, pie), ncol = 2)
+### 4. Juntamos los gráficos en una única hoja.
 
-# Dividir el dispositivo gráfico en 2 columnas y 2 filas
+```{r}
+# Dividimos el dispositivo gráfico en 2 columnas y 2 filas
 layout(matrix(c(1, 2, 3, 3), ncol = 2, byrow = TRUE))
 
 # Primer barplot
