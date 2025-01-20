@@ -24,6 +24,8 @@ if (!require(XML)) install.packages("XML")
 library(httr)
 library(XML)
 library(dplyr)
+library(ggplot2)
+library(gridExtra)
 
 # Descargar la página web
 url <- "https://www.mediawiki.org/wiki/MediaWiki"
@@ -140,35 +142,30 @@ print(link_summary)
 ### 1. Un histograma con la frecuencia de aparición de los enlaces, pero separado porURLs absolutas (con “http…”) y URLs relativas.
 
 ```{r}
-#librerias
-library(ggplot2)
-library(gridExtra)
-```
+# Extraemos todos los enlaces
+links <- xpathSApply(xml_content, "//a/@href")
 
-```{r}
+# Clasificamos enlaces absolutos y relativos
+absolute_links <- grep("^http", links, value = TRUE)
+relative_links <- grep("^http", links, invert = TRUE, value = TRUE)
 
-#Extraer el tipo de página (absoluta, relativa)}
-links_tipo_url <- xpathSApply(xml_content,"//a",xmlGetAttr,"href")
-
-# Crear un data.frame con texto, URLs y tipo
-links_df <- data.frame(
-  Text = link_texts,
-  URL = resolved_urls,
-  Tipo = links_tipo_url,
-  stringsAsFactors = FALSE
+# Contamos frecuencias
+frequencies <- data.frame(
+  Tipo = c("Absolute", "Relative"),
+  Count = c(length(absolute_links), length(relative_links))
 )
 
-# Clasificar las URLs como absolutas o relativas
-links_df$Tipo <- ifelse(grepl("^http", links_df$Tipo), "Absoluta", "Relativa")
-
-barplot (height = table(links_df$Tipo), col = "deepskyblue3", main = "Frecuencua aparición enlaces")
+# Generaramos el histograma
+ggplot(frequencies, aes(x = Tipo, y = Count, fill = Tipo)) +
+  geom_bar(stat = "identity") +
+  ggtitle("Frecuencia de links absolutos y relativos") +
+  xlab("Tipo de link") +
+  ylab("Frecuencia") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
-### 
-
-2.  Un gráfico de barras indicando la suma de enlaces que apuntan a
-    otros dominios o servicios (distinto a <https://www.mediawiki.org>
-    en el caso de ejemplo) vs. la suma de los otros enlaces.
+### 2. Un gráfico de barras indicando la suma de enlaces que apuntan a otros dominios o servicios (distinto a <https://www.mediawiki.org> en el caso de ejemplo) vs. la suma de los otros enlaces.
 
 ```{r}
 # Base URL
